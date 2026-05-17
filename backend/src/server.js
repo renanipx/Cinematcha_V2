@@ -3,9 +3,14 @@ const { globalLimiter, suggestLimiter, dailyQuotaMiddleware } = require('./middl
 const { sanitizePrompt } = require('./utils/sanitizer');
 const { handleSuggest } = require('./controllers/suggest.controller');
 const logger = require('./utils/logger');
+const { correlationIdMiddleware, httpLoggingMiddleware } = require('./middleware/logging.middleware');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// 0. Correlation ID & HTTP Logging Middleware (mounted first to trace all lifecycles)
+app.use(correlationIdMiddleware);
+app.use(httpLoggingMiddleware);
 
 // 1. Core Express JSON Parser
 app.use(express.json());
@@ -81,6 +86,21 @@ app.use((err, req, res, next) => {
     message: err.message || 'An unexpected security or processing error occurred.'
   });
 });
+
+// Check write access to the logging directory
+const fs = require('fs');
+const LOG_DIR = process.env.LOG_DIR || '/var/log/cinematcha';
+const isProduction = process.env.NODE_ENV === 'production';
+const forceMinimal = process.env.FORCE_MINIMAL_LOGGING === 'true';
+
+if (isProduction && !forceMinimal) {
+  try {
+    fs.accessSync(LOG_DIR, fs.constants.W_OK);
+    logger.info(`[SERVER] Log directory ${LOG_DIR} is verified writable.`);
+  } catch (err) {
+    logger.warn(`[SERVER WARNING] Log directory ${LOG_DIR} is not writable or does not exist: ${err.message}. Winston daily rotation will be inactive. Streams remain functional on console.`);
+  }
+}
 
 // Startup listener
 const server = app.listen(PORT, () => {
