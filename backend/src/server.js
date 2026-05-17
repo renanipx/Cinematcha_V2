@@ -61,6 +61,17 @@ app.post('/suggest', suggestProtection, handleSuggest);
 const { handleInvalidate } = require('./controllers/cache.controller');
 app.delete('/api/cache/invalidate', globalLimiter, handleInvalidate);
 
+// Observability metrics endpoint
+const { register } = require('./utils/metrics');
+app.get('/metrics', globalLimiter, async (req, res) => {
+  try {
+    res.setHeader('Content-Type', register.contentType);
+    res.send(await register.metrics());
+  } catch (err) {
+    res.status(500).send(err.message);
+  }
+});
+
 // Centralized error handler
 app.use((err, req, res, next) => {
   console.error('[SERVER ERROR]', err.stack);

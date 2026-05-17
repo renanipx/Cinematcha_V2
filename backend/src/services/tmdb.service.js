@@ -1,5 +1,7 @@
 // Using native global fetch
 const cacheService = require('./cache.service');
+const logger = require('../utils/logger');
+const { cacheHitsCounter, cacheMissesCounter } = require('../utils/metrics');
 
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const TMDB_BASE_URL = 'https://api.themoviedb.org/3';
@@ -81,11 +83,13 @@ async function searchMovie(title, locale = 'en') {
   // 1. Check title search key cache
   const cachedSearch = await cacheService.get(searchCacheKey);
   if (cachedSearch) {
-    console.info(`[REDIS] CACHE_HIT - Key: ${searchCacheKey}`);
+    logger.info(`[REDIS] CACHE_HIT - Key: ${searchCacheKey}`);
+    cacheHitsCounter.inc({ cache_type: 'movie_search' });
     return cachedSearch;
   }
 
-  console.info(`[REDIS] CACHE_MISS - Key: ${searchCacheKey}`);
+  logger.info(`[REDIS] CACHE_MISS - Key: ${searchCacheKey}`);
+  cacheMissesCounter.inc({ cache_type: 'movie_search' });
 
   let movie = null;
 
@@ -114,7 +118,7 @@ async function searchMovie(title, locale = 'en') {
         }
       }
     } catch (err) {
-      console.error(`[TMDB SERVICE ERROR] Failed to fetch movie search for "${title}":`, err.message);
+      logger.error(`[TMDB SERVICE ERROR] Failed to fetch movie search for "${title}": ${err.message}`);
     }
   }
 
@@ -164,11 +168,13 @@ async function getMovieTrailer(movieId, locale = 'en') {
 
   const cachedTrailer = await cacheService.get(cacheKey);
   if (cachedTrailer) {
-    console.info(`[REDIS] CACHE_HIT - Key: ${cacheKey}`);
+    logger.info(`[REDIS] CACHE_HIT - Key: ${cacheKey}`);
+    cacheHitsCounter.inc({ cache_type: 'movie_trailer' });
     return cachedTrailer;
   }
 
-  console.info(`[REDIS] CACHE_MISS - Key: ${cacheKey}`);
+  logger.info(`[REDIS] CACHE_MISS - Key: ${cacheKey}`);
+  cacheMissesCounter.inc({ cache_type: 'movie_trailer' });
 
   let trailerUrl = null;
 
@@ -186,7 +192,7 @@ async function getMovieTrailer(movieId, locale = 'en') {
         }
       }
     } catch (err) {
-      console.error(`[TMDB SERVICE ERROR] Failed to fetch trailer for ID ${movieId}:`, err.message);
+      logger.error(`[TMDB SERVICE ERROR] Failed to fetch trailer for ID ${movieId}: ${err.message}`);
     }
   }
 
@@ -209,11 +215,13 @@ async function getMovieProviders(movieId, locale = 'en') {
 
   const cachedProviders = await cacheService.get(cacheKey);
   if (cachedProviders) {
-    console.info(`[REDIS] CACHE_HIT - Key: ${cacheKey}`);
+    logger.info(`[REDIS] CACHE_HIT - Key: ${cacheKey}`);
+    cacheHitsCounter.inc({ cache_type: 'movie_providers' });
     return cachedProviders;
   }
 
-  console.info(`[REDIS] CACHE_MISS - Key: ${cacheKey}`);
+  logger.info(`[REDIS] CACHE_MISS - Key: ${cacheKey}`);
+  cacheMissesCounter.inc({ cache_type: 'movie_providers' });
 
   let providers = null;
 
@@ -247,7 +255,7 @@ async function getMovieProviders(movieId, locale = 'en') {
         mapCategory(regionData.buy, 'buy');
       }
     } catch (err) {
-      console.error(`[TMDB SERVICE ERROR] Failed to fetch watch providers for ID ${movieId}:`, err.message);
+      logger.error(`[TMDB SERVICE ERROR] Failed to fetch watch providers for ID ${movieId}: ${err.message}`);
     }
   }
 

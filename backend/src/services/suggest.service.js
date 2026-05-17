@@ -2,6 +2,8 @@
 const pLimit = require('p-limit');
 const cacheService = require('./cache.service');
 const tmdbService = require('./tmdb.service');
+const logger = require('../utils/logger');
+const { cacheHitsCounter, cacheMissesCounter } = require('../utils/metrics');
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const GEMINI_MODEL = 'gemini-1.5-flash';
@@ -20,11 +22,13 @@ async function suggestMovies(prompt, locale = 'en') {
   // 1. Check Redis cache
   const cachedTitles = await cacheService.get(cacheKey);
   if (cachedTitles) {
-    console.info(`[REDIS] CACHE_HIT - Key: ${cacheKey}`);
+    logger.info(`[REDIS] CACHE_HIT - Key: ${cacheKey}`);
+    cacheHitsCounter.inc({ cache_type: 'suggest' });
     return cachedTitles;
   }
 
-  console.info(`[REDIS] CACHE_MISS - Key: ${cacheKey}`);
+  logger.info(`[REDIS] CACHE_MISS - Key: ${cacheKey}`);
+  cacheMissesCounter.inc({ cache_type: 'suggest' });
 
   let titles = null;
 
@@ -53,10 +57,10 @@ async function suggestMovies(prompt, locale = 'en') {
             .filter(t => t.length > 0);
         }
       } else {
-        console.error(`[GEMINI SERVICE ERROR] API returned status ${response.status}:`, await response.text());
+        logger.error(`[GEMINI SERVICE ERROR] API returned status ${response.status}: ${await response.text()}`);
       }
     } catch (err) {
-      console.error('[GEMINI SERVICE ERROR] Outgoing API connection failed:', err.message);
+      logger.error(`[GEMINI SERVICE ERROR] Outgoing API connection failed: ${err.message}`);
     }
   }
 
@@ -113,7 +117,7 @@ async function resolveMovieMetadata(movieTitles, locale = 'en') {
         };
       } catch (err) {
         // Soft fail: skip item and return null to prevent crashing the entire suggestion run
-        console.warn(`[ASYNC LIMITER WARNING] Soft fail occurred mapping metadata for "${title}":`, err.message);
+        logger.warn(`[ASYNC LIMITER WARNING] Soft fail occurred mapping metadata for "${title}": ${err.message}`);
         return null;
       }
     });
