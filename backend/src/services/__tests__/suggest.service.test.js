@@ -11,7 +11,8 @@ jest.mock('../cache.service', () => ({
 jest.mock('../tmdb.service', () => ({
   searchMovie: jest.fn(),
   getMovieTrailer: jest.fn(),
-  getMovieProviders: jest.fn()
+  getMovieProviders: jest.fn(),
+  getPopularMovies: jest.fn()
 }));
 
 describe('Suggest Service Caching & p-limit Resolver Suite', () => {
@@ -34,6 +35,16 @@ describe('Suggest Service Caching & p-limit Resolver Suite', () => {
   test('should resolve suggestions on suggestMovies cache miss', async () => {
     cacheService.get.mockResolvedValue(null);
     cacheService.set.mockResolvedValue(true);
+    
+    // Trigger evictions to verify dynamic backfill
+    tmdbService.searchMovie.mockResolvedValue(null);
+    tmdbService.getPopularMovies.mockResolvedValue([
+      { title: 'Interstellar' },
+      { title: 'Inception' },
+      { title: '2001: A Space Odyssey' },
+      { title: 'The Matrix' },
+      { title: 'Pulp Fiction' }
+    ]);
 
     const result = await suggestService.suggestMovies('space movies', 'en');
 

@@ -10,6 +10,7 @@ async function handleSuggest(req, res, next) {
   const { prompt } = req.body;
   const locale = req.body.locale || 'en';
   const bypassCache = req.body.bypassCache === true || req.query.bypassCache === 'true';
+  const version = req.headers['x-cinematcha-prompt-version'] || req.body.version || '1.0.0';
 
   try {
     // 1. If cache bypass requested, evict existing cache entry
@@ -27,7 +28,7 @@ async function handleSuggest(req, res, next) {
     res.statusCode = 200;
 
     // 3. Resolve AI recommendation titles from Gemini
-    const titles = await suggestService.suggestMovies(prompt, locale);
+    const titles = await suggestService.suggestMovies(prompt, locale, version);
 
     // 4. Stream early resolved titles chunk immediately to frontend
     res.write(JSON.stringify({ type: 'titles', data: titles }) + '\n');

@@ -269,8 +269,52 @@ async function getMovieProviders(movieId, locale = 'en') {
   return providers;
 }
 
+/**
+ * Fetches popular/trending movies from TMDB or fallback lists
+ * @param {string} locale - Locale ('en' or 'pt')
+ * @returns {Promise<object[]>} - Array of popular movies
+ */
+async function getPopularMovies(locale = 'en') {
+  if (TMDB_API_KEY) {
+    try {
+      const url = `${TMDB_BASE_URL}/movie/popular?api_key=${TMDB_API_KEY}&language=${locale === 'pt' ? 'pt-BR' : 'en-US'}`;
+      const res = await fetch(url);
+      if (res.status === 200) {
+        const data = await res.json();
+        if (data.results && data.results.length > 0) {
+          return data.results.map(r => ({
+            id: r.id,
+            title: r.title,
+            originalTitle: r.original_title,
+            poster: r.poster_path ? `https://image.tmdb.org/t/p/w500${r.poster_path}` : null,
+            overview: r.overview,
+            year: r.release_date ? new Date(r.release_date).getFullYear() : null,
+            releaseDate: r.release_date,
+            rating: r.vote_average,
+            voteCount: r.vote_count,
+            popularity: r.popularity,
+            hasVideo: false
+          }));
+        }
+      }
+    } catch (err) {
+      logger.error(`[TMDB SERVICE ERROR] Failed to fetch popular movies: ${err.message}`);
+    }
+  }
+
+  // Fallback if TMDB is down or key is missing
+  return [
+    { id: 157336, title: locale === 'pt' ? 'Interestelar' : 'Interstellar' },
+    { id: 27205, title: locale === 'pt' ? 'A Origem' : 'Inception' },
+    { id: 603, title: locale === 'pt' ? 'Matrix' : 'The Matrix' },
+    { id: 680, title: locale === 'pt' ? 'Pulp Fiction: Tempo de Violência' : 'Pulp Fiction' },
+    { id: 597, title: 'Titanic' }
+  ];
+}
+
 module.exports = {
   searchMovie,
   getMovieTrailer,
-  getMovieProviders
+  getMovieProviders,
+  getPopularMovies
 };
