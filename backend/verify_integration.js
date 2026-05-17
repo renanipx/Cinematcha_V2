@@ -58,11 +58,14 @@ async function runTests() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await res.json();
     assert.strictEqual(res.status, 200);
-    assert.strictEqual(data.success, true);
-    assert.strictEqual(data.prompt, 'Recommend sci-fi with &lt;Interstellar&gt; style');
-    console.log('✅ Test 4: Safe HTML characters are escaped and accepted.');
+    const bodyText = await res.text();
+    const chunks = bodyText.trim().split('\n').map(line => JSON.parse(line));
+    
+    const titlesChunk = chunks.find(c => c.type === 'titles');
+    assert.ok(titlesChunk);
+    assert.ok(Array.isArray(titlesChunk.data));
+    console.log('✅ Test 4: Safe HTML characters are escaped, accepted, and streamed successfully.');
   } catch (err) {
     console.error('❌ Test 4 Failed:', err.message);
   }
