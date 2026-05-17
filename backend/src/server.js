@@ -57,6 +57,10 @@ app.post('/api/suggest', suggestProtection, handleSuggest);
 // Backwards compatibility endpoint
 app.post('/suggest', suggestProtection, handleSuggest);
 
+// Cache management administrative endpoints
+const { handleInvalidate } = require('./controllers/cache.controller');
+app.delete('/api/cache/invalidate', globalLimiter, handleInvalidate);
+
 // Centralized error handler
 app.use((err, req, res, next) => {
   console.error('[SERVER ERROR]', err.stack);
