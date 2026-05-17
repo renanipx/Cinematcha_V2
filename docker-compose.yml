@@ -19,6 +19,14 @@ services:
     container_name: app-backend
     ports:
       - "3001:3001"
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - LOG_DIR=/var/log/cinematcha
+      - LOG_LEVEL=info
+      - REDIS_URL=redis://redis-cache:6379
+    volumes:
+      - app-logs:/var/log/cinematcha
     networks:
       - app-network
     depends_on:
@@ -37,10 +45,49 @@ services:
       - backend
     restart: unless-stopped
 
+  # NEW Observability Services
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: cinematcha-prometheus
+    volumes:
+      - ./infrastructure/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=15d'
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:10.0.0
+    container_name: cinematcha-grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-cinematcha_secure_2026}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./infrastructure/grafana/provisioning:/etc/grafana/provisioning:ro
+    networks:
+      - app-network
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
 networks:
   app-network:
     driver: bridge
 
 volumes:
   redis-data:
+    driver: local
+  app-logs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
     driver: local
