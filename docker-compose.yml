@@ -2,11 +2,14 @@ version: '3.8'
 
 services:
   redis-cache:
-    image: redis:alpine
-    container_name: redis-cache
+    image: redis:7.2-alpine
+    container_name: cinematcha-redis
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru --appendonly yes
+    restart: always
+    volumes:
+      - redis-data:/data
     networks:
       - app-network
-    restart: unless-stopped
     # Ensuring container isolation: no ports are exposed to the public host interface.
     # It is only accessible to services on the internal app-network bridge.
 
@@ -37,3 +40,7 @@ services:
 networks:
   app-network:
     driver: bridge
+
+volumes:
+  redis-data:
+    driver: local
