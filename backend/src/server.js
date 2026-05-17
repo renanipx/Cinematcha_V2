@@ -1,6 +1,7 @@
 const express = require('express');
 const { globalLimiter, suggestLimiter, dailyQuotaMiddleware } = require('./middleware/rateLimit.middleware');
 const { sanitizePrompt } = require('./utils/sanitizer');
+const { handleSuggest } = require('./controllers/suggest.controller');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -51,30 +52,10 @@ app.get('/popular', globalLimiter, (req, res) => {
 // Protect high-cost Suggest recommendation routes with Aggressive throttling and Daily caps
 const suggestProtection = [suggestLimiter, dailyQuotaMiddleware];
 
-app.post('/api/suggest', suggestProtection, (req, res) => {
-  const { prompt } = req.body;
-  res.json({
-    success: true,
-    prompt: prompt, // Safely returns the sanitized value
-    recommendations: [
-      { title: 'Inception', year: 2010 },
-      { title: 'Interstellar', year: 2014 }
-    ]
-  });
-});
+app.post('/api/suggest', suggestProtection, handleSuggest);
 
 // Backwards compatibility endpoint
-app.post('/suggest', suggestProtection, (req, res) => {
-  const { prompt } = req.body;
-  res.json({
-    success: true,
-    prompt: prompt,
-    recommendations: [
-      { title: 'Inception', year: 2010 },
-      { title: 'Interstellar', year: 2014 }
-    ]
-  });
-});
+app.post('/suggest', suggestProtection, handleSuggest);
 
 // Centralized error handler
 app.use((err, req, res, next) => {
