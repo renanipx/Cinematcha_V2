@@ -10,7 +10,7 @@ async function handleSuggest(req, res, next) {
   const { prompt } = req.body;
   const locale = req.body.locale || 'en';
   const bypassCache = req.body.bypassCache === true || req.query.bypassCache === 'true';
-  const version = req.headers['x-cinematcha-prompt-version'] || req.body.version || '1.0.0';
+  const version = (req.headers && req.headers['x-cinematcha-prompt-version']) || (req.body && req.body.version) || '1.0.0';
 
   try {
     // 1. If cache bypass requested, evict existing cache entry
