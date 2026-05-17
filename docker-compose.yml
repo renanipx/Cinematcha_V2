@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  redis-cache:
+    image: redis:alpine
+    container_name: redis-cache
+    networks:
+      - app-network
+    restart: unless-stopped
+    # Ensuring container isolation: no ports are exposed to the public host interface.
+    # It is only accessible to services on the internal app-network bridge.
+
+  backend:
+    build:
+      context: ./backend
+    container_name: app-backend
+    ports:
+      - "3001:3001"
+    networks:
+      - app-network
+    depends_on:
+      - redis-cache
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: app-frontend
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
