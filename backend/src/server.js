@@ -2,6 +2,7 @@ const express = require('express');
 const { globalLimiter, suggestLimiter, dailyQuotaMiddleware } = require('./middleware/rateLimit.middleware');
 const { sanitizePrompt } = require('./utils/sanitizer');
 const { handleSuggest } = require('./controllers/suggest.controller');
+const logger = require('./utils/logger');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -15,7 +16,7 @@ app.use((req, res, next) => {
     const result = sanitizePrompt(req.body.prompt);
     
     if (!result.isValid) {
-      console.warn(`[SECURITY ADVISORY] Blocked prompt from ${req.ip || 'unknown'}. Reason: ${result.message}`);
+      logger.warn(`[SECURITY ADVISORY] Blocked prompt from ${req.ip || 'unknown'}. Reason: ${result.message}`);
       return res.status(400).json({
         error: result.error,
         message: result.message
@@ -74,7 +75,7 @@ app.get('/metrics', globalLimiter, async (req, res) => {
 
 // Centralized error handler
 app.use((err, req, res, next) => {
-  console.error('[SERVER ERROR]', err.stack);
+  logger.error(`[SERVER ERROR] ${err.stack}`);
   res.status(500).json({
     error: 'Internal Server Error',
     message: err.message || 'An unexpected security or processing error occurred.'
@@ -83,7 +84,8 @@ app.use((err, req, res, next) => {
 
 // Startup listener
 const server = app.listen(PORT, () => {
-  console.log(`[SERVER] Cinematcha backend running cleanly on port ${PORT}`);
+  logger.info(`[SERVER] Cinematcha backend running cleanly on port ${PORT}`);
+  logger.info(`[SERVER] AI Orchestration & Reliability Pipeline initialized. Active Models: ${require('./services/failover.service').MODEL_CASCADE.map(m => m.id).join(', ')}`);
 });
 
 module.exports = { app, server };
