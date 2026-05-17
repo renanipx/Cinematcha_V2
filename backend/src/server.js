@@ -15,6 +15,17 @@ app.use(httpLoggingMiddleware);
 // 1. Core Express JSON Parser
 app.use(express.json());
 
+// Enable CORS headers middleware
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-cinematcha-prompt-version');
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
+
 // 2. Global Input Sanitization Hook (Scans body requests for potential LLM/XSS injection)
 app.use((req, res, next) => {
   if (req.body && typeof req.body === 'object' && 'prompt' in req.body) {
