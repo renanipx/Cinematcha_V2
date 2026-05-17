@@ -1,6 +1,6 @@
 const { createClient } = require('redis');
 
-const DISABLE_REDIS = process.env.DISABLE_REDIS === 'true';
+const DISABLE_REDIS = process.env.DISABLE_REDIS === 'true' || process.env.DISABLE_CACHE === 'true';
 const REDIS_URL = process.env.REDIS_URL || 'redis://redis-cache:6379';
 
 let redisClient = null;
@@ -11,14 +11,10 @@ if (!DISABLE_REDIS) {
     url: REDIS_URL,
     socket: {
       reconnectStrategy: (retries) => {
-        // Try reconnecting every 3 seconds up to 10 times, then stop
-        if (retries > 10) {
-          console.error('[REDIS] Reconnection attempts exhausted. Disabling Redis operations.');
-          isRedisConnected = false;
-          return false; // Stop reconnecting
-        }
-        console.warn(`[REDIS] Connection lost. Attempting reconnection #${retries}...`);
-        return 3000;
+        // Exponential backoff with a cap of 30 seconds
+        const delay = Math.min(Math.pow(2, retries) * 1000, 30000);
+        console.warn(`[REDIS] Connection failed. Retrying in ${delay}ms... (Attempt ${retries})`);
+        return delay;
       }
     }
   });
