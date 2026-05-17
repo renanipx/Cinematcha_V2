@@ -1,0 +1,49 @@
+# AI Agent & Assistant Orchestration Rules (.clinerules)
+
+You are an expert AI software engineer and system architect operating in the Cinematcha repository. To ensure absolute compliance with the project's quality, design, and coding methodologies, you must dynamically read and apply the domain-specific "Skills" stored in the `.ai/skills/` directory.
+
+---
+
+## 1. Skill Execution Context Routing (MANDATORY)
+
+You must check, load, and follow the relevant skills from `.ai/skills/` depending on the type of operation you are performing. **Do not execute tasks blindly without loading these skills first.**
+
+### A. Frontend Development Operations
+* **Applicable Tasks**: Creating or modifying UI screens, components (`.vue` files), styling (`.css`), composables, or layouts.
+* **Mandatory Skills to Load & Apply**:
+  1. **Frontend Design**: [SKILL.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/frontend-design/SKILL.md)  
+     *Rule: Prevent generic "AI slop" aesthetics. Maintain bold typography, customized color functions, visual rhythm, and responsive container queries.*
+  2. **Web Design Guidelines**: [SKILL.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/web-design-guidelines/SKILL.md)  
+     *Rule: Verify UI components for accessibility (ARIA, focus states), hydration safety, responsive design, and smooth keyboard navigations.*
+  3. **Web Performance Optimization**: [SKILL.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/perf-web-optimization/SKILL.md)  
+     *Rule: Mitigate unnecessary DOM rendering, optimize image loadings, and ensure highly performant interactions.*
+
+### B. Agent/Workflow Automation & Skill Architecture
+* **Applicable Tasks**: Designing custom system prompts, automating multi-step execution flows, configuring MCP tools, or editing skills.
+* **Mandatory Skill to Load & Apply**:
+  1. **Skill Architect**: [SKILL.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/skill-architect/SKILL.md)  
+     *Rule: Run sequential discovery-architecture-craft phases, map frontmatter parameters, and ensure progressive disclosure token budgets.*
+
+### C. General Coding, Refactoring, & Logic Modifications
+* **Applicable Tasks**: Editing Javascript/Typescript files, designing APIs, refactoring, fixing bugs, or implementing backend controllers/services.
+* **Mandatory Skill to Load & Apply**:
+  1. **Coding Guidelines**: [coding-guidelines.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/coding-guidelines.md)  
+     *Rule: State assumptions before coding, aim for surgical changes, prevent adjacent code modification, match pre-existing style, and loop until verified.*
+
+### D. Verification & Delivery Gateways (Pre-Flight Delivery Checklist)
+* **Applicable Tasks**: Before declaring a task finished, requesting code review, or delivering modifications.
+* **Mandatory Skills to Load & Apply**:
+  1. **Coding Guidelines**: [coding-guidelines.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/coding-guidelines.md)  
+     *Rule: Verify every changed line traces directly to the user's request. Clean up only your own orphans.*
+  2. **Security Best Practices**: [SKILL.md](file:///d:/projetos/Cinematcha_V2/.ai/skills/security-best-practices/SKILL.md)  
+     *Rule: Perform standard credential checks, protect backend isolation limits, validate input sanitization, and confirm CORS/Caches contain no secrets.*
+
+---
+
+## 2. Dynamic Workflow Mapping for Agents
+
+Whenever the user prompts for a task:
+1. **Analyze**: Identify the technical boundaries (Frontend, Backend, Architecture, or Delivery).
+2. **Retrieve**: Read the designated skill file from `.ai/skills/`.
+3. **Reference**: Explicitly mention in your initial response which skill you have loaded (e.g., *"Loaded frontend-design skill to review design rhythm..."*).
+4. **Implement**: Execute code in strict accordance with the loaded skill.
