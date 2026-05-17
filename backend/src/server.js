@@ -70,6 +70,10 @@ app.delete('/api/cache/invalidate', globalLimiter, handleInvalidate);
 // Observability metrics endpoint
 const { register } = require('./utils/metrics');
 app.get('/metrics', globalLimiter, async (req, res) => {
+  if (process.env.DISABLE_TELEMETRY === 'true') {
+    return res.status(503).send('Telemetry Disabled via environment configurations.');
+  }
+  
   try {
     res.setHeader('Content-Type', register.contentType);
     res.send(await register.metrics());
