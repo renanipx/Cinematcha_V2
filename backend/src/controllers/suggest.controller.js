@@ -28,7 +28,7 @@ async function handleSuggest(req, res, next) {
     res.statusCode = 200;
 
     // 3. Resolve AI recommendation titles from Gemini
-    const titles = await suggestService.suggestMovies(prompt, locale, version);
+    const titles = await suggestService.suggestMovies(prompt, locale, version, req.traceId);
 
     // 4. Stream early resolved titles chunk immediately to frontend
     res.write(JSON.stringify({ type: 'titles', data: titles }) + '\n');

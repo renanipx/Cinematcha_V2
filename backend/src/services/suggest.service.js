@@ -4,6 +4,7 @@ const cacheService = require('./cache.service');
 const tmdbService = require('./tmdb.service');
 const logger = require('../utils/logger');
 const metrics = require('../utils/metrics');
+const { trackTransactionCosts } = require('../utils/cost-calculator');
 
 // New reliability modules
 const promptRegistry = require('../config/prompts/registry');
@@ -156,9 +157,10 @@ async function crossValidateAndBackfill(movieTitles, locale) {
  * @param {string} prompt - Clean search query
  * @param {string} locale - Locale ('en' or 'pt')
  * @param {string} version - Optional SemVer version (e.g. '1.0.0')
+ * @param {string} traceId - Optional correlation ID
  * @returns {Promise<string[]>} - Array of recommendation movie titles
  */
-async function suggestMovies(prompt, locale = 'en', version = '1.0.0') {
+async function suggestMovies(prompt, locale = 'en', version = '1.0.0', traceId = null) {
   const promptHash = cacheService.hashPrompt(prompt);
   const cacheKey = `cache:suggest:${promptHash}:${locale}`;
 
@@ -244,17 +246,11 @@ async function suggestMovies(prompt, locale = 'en', version = '1.0.0') {
               throw new Error('LLM returned response with empty parts');
             }
 
-            // Expose Prometheus token count and cost metrics
+            // Expose Prometheus token count and cost metrics using the cost calculator
             const inputTokens = data.usageMetadata?.promptTokenCount || 0;
             const outputTokens = data.usageMetadata?.candidatesTokenCount || 0;
             
-            getTokensCounter().inc({ model: modelId, type: 'input' }, inputTokens);
-            getTokensCounter().inc({ model: modelId, type: 'output' }, outputTokens);
-
-            const cost = (inputTokens / 1000) * modelConfig.costPer1kIn + (outputTokens / 1000) * modelConfig.costPer1kOut;
-            getCostCounter().inc({ model: modelId }, cost);
-
-            logger.info(`[AI_ORCH] Consumed tokens: Input=${inputTokens}, Output=${outputTokens}, Cost=$${cost.toFixed(6)}`);
+            trackTransactionCosts(modelId, inputTokens, outputTokens, traceId, 'suggest');
 
             // Execute response validation contract
             titles = aiValidationService.validateResponseContract(rawText);
