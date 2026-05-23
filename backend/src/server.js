@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { globalLimiter, suggestLimiter, dailyQuotaMiddleware } = require('./middleware/rateLimit.middleware');
 const { sanitizePrompt } = require('./utils/sanitizer');

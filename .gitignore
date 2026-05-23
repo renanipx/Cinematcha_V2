@@ -1,3 +1,5 @@
 node_modules
 .env
 .vscode
+activities.txt
+DEVELOPMENT.md
